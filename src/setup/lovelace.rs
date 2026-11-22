@@ -5,7 +5,7 @@
 //! reported instead of silently disappearing, and a view that does not fit the
 //! screen is split into several pages.
 
-use crate::config::{CardConfig, PageConfig};
+use crate::config::{CardConfig, PageConfig, SensorItemConfig};
 use crate::ui::screen::flow_hidden_count;
 #[cfg(test)]
 use crate::ui::screen::hidden_card_count;
@@ -246,6 +246,32 @@ fn flatten(cards: &[Value], out: &mut Vec<CardConfig>, skipped: &mut BTreeMap<St
                         None => skip(skipped, kind),
                     }
                 }
+            }
+            "calendar" => {
+                let entities: Vec<SensorItemConfig> = card
+                    .get("entities")
+                    .and_then(Value::as_array)
+                    .map(|list| {
+                        list.iter()
+                            .filter_map(|item| item.as_str().or_else(|| item.get("entity").and_then(Value::as_str)))
+                            .map(|entity| SensorItemConfig {
+                                entity_id: entity.to_string(),
+                                title: entity_label(entity),
+                                icon: None,
+                                unit: None,
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                if entities.is_empty() {
+                    skip(skipped, kind);
+                    continue;
+                }
+                out.push(CardConfig::Calendar {
+                    title: card.get("title").and_then(Value::as_str).map(str::to_string),
+                    entities,
+                    days: crate::config::default_calendar_days(),
+                });
             }
             "button" => {
                 let Some(entity) = card.get("entity").and_then(Value::as_str) else {

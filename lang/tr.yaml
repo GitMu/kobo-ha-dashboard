@@ -115,3 +115,9 @@ update:
   how: "Kurmak için Kobo'yu bir bilgisayara bağlayıp kurulum aracını açın: yeni sürümü ve nereden indirileceğini orada görürsünüz."
   skip: "Bu sürümü atla"
   close: "Kapat"
+
+calendar:
+  tomorrow: "Yarın"
+  all_day: "Tüm gün"
+  nothing: "Plan yok"
+  more: "+{count} daha"

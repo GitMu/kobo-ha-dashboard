@@ -769,6 +769,9 @@ const CARD_TYPES = {
     fields: [["title", "text", "design.title_optional"], ["entities", "list", "design.entities", { max: 8, domains: SENSOR_DOMAINS, item: "sensor" }]] },
   glance: { icon: "layers", defaults: { entities: [] },
     fields: [["title", "text", "design.title_optional"], ["entities", "list", "design.entities", { max: 8, domains: [...new Set([...SENSOR_DOMAINS, ...TOGGLE_DOMAINS, "person", "device_tracker", "alarm_control_panel"])], item: "sensor" }]] },
+  calendar: { icon: "calendar", defaults: { entities: [], days: 3 },
+    fields: [["title", "text", "design.title_optional"], ["entities", "list", "design.calendars", { max: 8, domains: ["calendar"], item: "calendar" }],
+      ["days", "number", "design.calendar_days", { min: 1, max: 14 }]] },
   image: { icon: "picture", domains: ["image", "camera"], defaults: { fit: "contain" },
     fields: [["entity_id"], ["title", "text", "design.title_optional"],
       ["fit", "select", "design.image_fit", { options: ["contain", "cover", "stretch"], label: "design.fit_" }],
@@ -1338,7 +1341,7 @@ async function generate() {
 /// The add panel's groups, in order. A camera is a picture card with a
 /// camera entity.
 const PALETTE = [
-  ["ws.group_page", ["heading", "weather"]],
+  ["ws.group_page", ["heading", "weather", "calendar"]],
   ["ws.group_controls", ["light", "switch", "climate", "cover", "media_player", "scene", "scenes_row"]],
   ["ws.group_values", ["sensor", "sensor_grid", "glance", "progress"]],
   ["ws.group_charts", ["statistics", "breakdown"]],
@@ -2033,7 +2036,9 @@ function listEditor(c, key, label, opts) {
     wrap.append(el("div", { class: "subitem" },
       el("label", { class: "field" }, T("design.entity"), input, meta),
       el("label", { class: "field" }, T("design.label"), title),
-      el("label", { class: "field" }, T("design.icon"), iconSelect(item.icon, (v) => { if (v) item.icon = v; else if (opts.item === "scene") item.icon = "play"; else delete item.icon; sync(); }, opts.item !== "scene", "zap")),
+      // A calendar's events have no icon of their own
+      opts.item === "calendar" ? el("span") :
+        el("label", { class: "field" }, T("design.icon"), iconSelect(item.icon, (v) => { if (v) item.icon = v; else if (opts.item === "scene") item.icon = "play"; else delete item.icon; sync(); }, opts.item !== "scene", "zap")),
       opts.item === "sensor" ? el("label", { class: "field" }, T("design.unit"), unit) : el("span"),
       // Order: up, down, and out
       el("div", { class: "row subitem-tools" },

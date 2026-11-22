@@ -252,6 +252,8 @@ design:
   unit: "Unità"
   unit_optional: "Unità (facoltativa)"
   forecast_days: "Giorni di previsione"
+  calendars: "Calendari"
+  calendar_days: "Giorni mostrati"
   step: "Passo (°)"
   show_brightness: "Mostra barra luminosità"
   show_graph: "Mostra grafico 24 ore"
@@ -299,6 +301,7 @@ design:
   image_memory_hint: "I Kobo più vecchi hanno solo 256–512 MB di memoria. Mantieni piccola questa immagine, ad esempio 1920×1080 o meno; un'istantanea di una telecamera molto grande può esaurire la memoria della dashboard. Le immagini più grandi di 4K non vengono mostrate."
 
 card_types:
+  calendar: "Calendario"
   picture: "Immagine (file)"
   breakdown: "Ripartizione (anello)"
   progress: "Barra di avanzamento"

@@ -252,6 +252,8 @@ design:
   unit: "单位"
   unit_optional: "单位（可选）"
   forecast_days: "预报天数"
+  calendars: "日历"
+  calendar_days: "显示天数"
   step: "步长（°）"
   show_brightness: "显示亮度条"
   show_graph: "显示 24 小时图表"
@@ -299,6 +301,7 @@ design:
   image_memory_hint: "较旧的 Kobo 只有 256–512 MB 内存。请让这张图片保持较小，例如 1920×1080 或更小；过大的摄像头快照可能耗尽仪表板的内存。大于 4K 的图片不会显示。"
 
 card_types:
+  calendar: "日历"
   picture: "图片（文件）"
   breakdown: "占比（环形）"
   progress: "进度条"

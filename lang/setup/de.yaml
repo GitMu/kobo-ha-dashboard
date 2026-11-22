@@ -252,6 +252,8 @@ design:
   unit: "Einheit"
   unit_optional: "Einheit (optional)"
   forecast_days: "Vorhersagetage"
+  calendars: "Kalender"
+  calendar_days: "Angezeigte Tage"
   step: "Schritt (°)"
   show_brightness: "Helligkeitsbalken anzeigen"
   show_graph: "24-Stunden-Diagramm anzeigen"
@@ -299,6 +301,7 @@ design:
   image_memory_hint: "Ältere Kobos haben nur 256–512 MB Arbeitsspeicher. Halten Sie dieses Bild klein, zum Beispiel 1920×1080 oder kleiner; ein großer Kamera-Schnappschuss kann den Speicher des Dashboards erschöpfen. Bilder über 4K werden nicht angezeigt."
 
 card_types:
+  calendar: "Kalender"
   picture: "Bild (Datei)"
   breakdown: "Aufteilung (Ring)"
   progress: "Fortschrittsbalken"

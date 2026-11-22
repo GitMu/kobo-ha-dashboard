@@ -115,3 +115,9 @@ update:
   how: "インストールするには Kobo をパソコンにつなぎ、セットアップツールを開いてください。新しいバージョンとダウンロード先が表示されます。"
   skip: "このバージョンをスキップ"
   close: "閉じる"
+
+calendar:
+  tomorrow: "明日"
+  all_day: "終日"
+  nothing: "予定なし"
+  more: "他 {count} 件"

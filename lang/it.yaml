@@ -115,3 +115,9 @@ update:
   how: "Per installarla, collega il Kobo a un computer e apri lo strumento di configurazione: mostra la nuova versione e dove scaricarla."
   skip: "Salta questa versione"
   close: "Chiudi"
+
+calendar:
+  tomorrow: "Domani"
+  all_day: "Tutto il giorno"
+  nothing: "Niente in programma"
+  more: "+{count} altri"

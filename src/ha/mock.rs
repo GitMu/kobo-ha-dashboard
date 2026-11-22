@@ -226,5 +226,45 @@ pub fn generate_mock_states() -> HashMap<String, EntityState> {
         },
     );
 
+    // 7. Calendars, with events around today
+    let today = chrono::Local::now().date_naive();
+    let day = |n: i64| (today + chrono::Duration::days(n)).format("%Y-%m-%d").to_string();
+    let at = |n: i64, hm: &str| format!("{}T{}:00", day(n), hm);
+    let calendars = [
+        (
+            "calendar.family",
+            "Family",
+            json!([
+                {"summary": "Bins out", "start": day(0), "end": day(1), "all_day": true},
+                {"summary": "Swimming lesson", "start": at(0, "17:30"), "end": at(0, "18:30"), "all_day": false},
+                {"summary": "Dinner with friends", "start": at(1, "19:30"), "end": at(1, "22:00"), "all_day": false},
+                {"summary": "Grandma's birthday", "start": day(2), "end": day(3), "all_day": true}
+            ]),
+        ),
+        (
+            "calendar.work",
+            "Work",
+            json!([
+                {"summary": "Team meeting", "start": at(0, "23:00"), "end": at(0, "23:30"), "all_day": false},
+                {"summary": "Dentist", "start": at(1, "08:45"), "end": at(1, "09:30"), "all_day": false},
+                {"summary": "Project review", "start": at(2, "14:00"), "end": at(2, "15:00"), "all_day": false}
+            ]),
+        ),
+    ];
+    for (id, name, events) in calendars {
+        let mut attributes: HashMap<String, serde_json::Value> = serde_json::from_value(json!({ "friendly_name": name })).unwrap();
+        attributes.insert(crate::ha::client::CALENDAR_ATTR.to_string(), events);
+        map.insert(
+            id.to_string(),
+            EntityState {
+                entity_id: id.to_string(),
+                state: "off".to_string(),
+                attributes: serde_json::from_value(serde_json::to_value(attributes).unwrap()).unwrap(),
+                last_changed: None,
+                last_updated: None,
+            },
+        );
+    }
+
     map
 }

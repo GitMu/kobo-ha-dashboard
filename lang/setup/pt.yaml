@@ -252,6 +252,8 @@ design:
   unit: "Unidade"
   unit_optional: "Unidade (opcional)"
   forecast_days: "Dias de previsão"
+  calendars: "Calendários"
+  calendar_days: "Dias mostrados"
   step: "Passo (°)"
   show_brightness: "Mostrar barra de brilho"
   show_graph: "Mostrar gráfico de 24 horas"
@@ -299,6 +301,7 @@ design:
   image_memory_hint: "Kobos mais antigos têm apenas 256–512 MB de memória. Mantenha esta imagem pequena, por exemplo 1920×1080 ou menos; uma captura de câmera grande pode esgotar a memória do painel. Imagens maiores que 4K não são exibidas."
 
 card_types:
+  calendar: "Calendário"
   picture: "Imagem (ficheiro)"
   breakdown: "Repartição (anel)"
   progress: "Barra de progresso"

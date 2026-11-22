@@ -630,6 +630,19 @@ pub enum CardConfig {
         title: Option<String>,
         entities: Vec<SensorItemConfig>,
     },
+    /// Upcoming events of one or more `calendar` entities, merged into a
+    /// single list grouped by day, as a Lovelace `calendar` card in list view
+    #[serde(rename = "calendar")]
+    Calendar {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        title: Option<String>,
+        /// The calendars; each one's title is shown next to its events when
+        /// there are several
+        entities: Vec<SensorItemConfig>,
+        /// How many days are listed, today included
+        #[serde(default = "default_calendar_days")]
+        days: u32,
+    },
     /// Picture from a Home Assistant `image` entity, as a Lovelace `picture`
     /// card with `image_entity` (or an `image` card).
     #[serde(rename = "image")]
@@ -685,6 +698,12 @@ impl ImageFit {
         *self == ImageFit::Contain
     }
 }
+
+pub fn default_calendar_days() -> u32 {
+    3
+}
+/// Longest range a calendar card lists, in days
+pub const MAX_CALENDAR_DAYS: u32 = 14;
 
 fn default_stat_period() -> String {
     "day".to_string()

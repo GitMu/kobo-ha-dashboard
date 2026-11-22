@@ -6,6 +6,7 @@ use crate::ha::models::EntityState;
 use crate::ui::layout::{InteractiveTarget, Rect, UiAction};
 use crate::ui::theme::Theme;
 use crate::ui::widgets::breakdown_card;
+use crate::ui::widgets::calendar_card;
 use crate::ui::widgets::climate_card::{self, CLIMATE_WIDE};
 use crate::ui::widgets::cover_card::COVER_WIDE;
 use crate::ui::widgets::glance_card::{self, glance_height};
@@ -45,6 +46,7 @@ fn span_of(card: &CardConfig) -> Span {
         | CardConfig::Heading { .. }
         | CardConfig::Statistics { .. }
         | CardConfig::Glance { .. }
+        | CardConfig::Calendar { .. }
         | CardConfig::Image { .. } => Span::Full,
         _ => Span::Half,
     }
@@ -115,6 +117,10 @@ fn heights(card: &CardConfig, w: f32) -> (f32, f32) {
         CardConfig::Image { title, .. } => {
             let t = if title.is_some() { image_card::TITLE_H } else { 0.0 };
             (t + 320.0, t + 220.0)
+        }
+        CardConfig::Calendar { title, days, .. } => {
+            let t = if title.is_some() { calendar_card::TITLE_H } else { 0.0 };
+            (t + calendar_card::natural_height(*days), t + 170.0)
         }
     }
 }
@@ -317,6 +323,10 @@ fn grid_min(card: &CardConfig, w: f32) -> (f32, f32) {
         CardConfig::Image { title, .. } => {
             let t = if title.is_some() { image_card::TITLE_H } else { 0.0 };
             (160.0, t + 120.0)
+        }
+        CardConfig::Calendar { title, .. } => {
+            let t = if title.is_some() { calendar_card::TITLE_H } else { 0.0 };
+            (240.0, t + 140.0)
         }
     }
 }
@@ -574,6 +584,11 @@ fn new_cards() -> Vec<CardConfig> {
             title: None,
             entities: Vec::new(),
         },
+        CardConfig::Calendar {
+            title: None,
+            entities: Vec::new(),
+            days: crate::config::default_calendar_days(),
+        },
         CardConfig::Heading {
             title: String::new(),
             icon: None,
@@ -804,6 +819,8 @@ pub struct ScreenRenderer {
     /// Battery, charging and Wi-Fi to show instead of the device's own (the
     /// setup tool's preview runs on a computer)
     pub device_status: Option<(Option<u8>, bool, Option<bool>)>,
+    /// Times as "9:30 AM" rather than "09:30"
+    twelve_hour: bool,
     /// Pixels per UI unit on the last rendered canvas
     scale: f32,
     /// Raw images of `image.*` entities, as fetched from Home Assistant
@@ -842,6 +859,7 @@ impl ScreenRenderer {
             sleep_until: None,
             battery_empty: false,
             device_status: None,
+            twelve_hour: config.theme.time_format == "12h",
             update_offer: None,
             show_update: false,
             scale: 1.0,
@@ -907,6 +925,7 @@ impl ScreenRenderer {
     }
 
     pub fn render(&mut self, canvas: &mut Canvas, config: &AppConfig, active_page_idx: usize, states: &HashMap<String, EntityState>, is_live: bool) {
+        self.twelve_hour = config.theme.time_format == "12h";
         self.targets.clear();
         self.hidden_cards = 0;
         self.scale = canvas.scale;
@@ -1303,6 +1322,9 @@ impl ScreenRenderer {
             ),
             CardConfig::Glance { title, entities } => render_glance_card(canvas, theme, rect, title.as_deref(), entities, states, targets),
             CardConfig::Breakdown { title, entities } => render_breakdown_card(canvas, theme, rect, title.as_deref(), entities, states, targets),
+            CardConfig::Calendar { title, entities, days } => {
+                render_calendar_card(canvas, theme, rect, title.as_deref(), entities, *days, self.twelve_hour, states, targets)
+            }
             CardConfig::Image {
                 entity_id, title, frameless, ..
             } => render_image_card(canvas, theme, rect, entity_id, title.as_deref(), *frameless, image, targets),
@@ -1813,7 +1835,7 @@ mod tests {
         let mut config = AppConfig::default();
         grid_pages(&mut config.pages, 1072, 1448, true);
         let layout = grid_layout(&config.pages[0], 1072, 1448, true).unwrap();
-        assert_eq!(layout.new_sizes.len(), 16, "{:?}", layout.new_sizes);
+        assert_eq!(layout.new_sizes.len(), 17, "{:?}", layout.new_sizes);
         for (kind, (w, h, mw, mh)) in &layout.new_sizes {
             assert!(*w >= 1 && *h >= 1 && *w <= layout.grid.columns && *h <= layout.grid.rows, "{kind}: {w}x{h}");
             assert!(mw <= w && mh <= h && *mw >= 1 && *mh >= 1, "{kind}: smallest {mw}x{mh} of {w}x{h}");

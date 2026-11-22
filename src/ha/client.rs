@@ -14,6 +14,11 @@ pub const HISTORY_ATTR: &str = "__history";
 
 /// Forecasts and graph history change slowly; fetching them rarely saves power.
 const HISTORY_REFRESH: Duration = Duration::from_secs(1800);
+/// Calendars: often enough to see a new appointment soon, rarely enough
+/// not to keep the radio busy. The refresh button fetches them at once.
+const CALENDAR_REFRESH: Duration = Duration::from_secs(900);
+/// Attribute key under which a calendar's upcoming events are stored
+pub const CALENDAR_ATTR: &str = "__events";
 /// Pictures change at most daily (a rendered chart), so fetch them rarely.
 const IMAGE_REFRESH: Duration = Duration::from_secs(6 * 3600);
 /// A failed picture fetch (a restarting chart, a slow Home Assistant) is retried
@@ -42,6 +47,10 @@ pub struct HaClient {
     image_entities: Arc<Vec<String>>,
     /// Thermostats drawn with a graph, and how many hours back
     climate_graphs: Arc<Vec<(String, u32)>>,
+    /// Calendars of the calendar cards, and how many days ahead
+    calendars: Arc<Vec<(String, u32)>>,
+    /// The calendars are fetched on the next refresh, however recent
+    calendars_due: Arc<AtomicBool>,
     /// Their pictures, as fetched from `/api/image_proxy`
     images: Arc<RwLock<HashMap<String, Arc<Vec<u8>>>>>,
     /// When the pictures were last fetched
@@ -96,6 +105,9 @@ struct Extras {
     last_history_fetch: Option<Instant>,
     last_forecast_fetch: Option<Instant>,
     last_stats_fetch: Option<Instant>,
+    /// Per calendar, its upcoming events (see `CALENDAR_ATTR`)
+    calendars: HashMap<String, Value>,
+    last_calendar_fetch: Option<Instant>,
 }
 
 impl HaClient {
@@ -134,6 +146,8 @@ impl HaClient {
             stat_requests: Arc::new(Vec::new()),
             image_entities: Arc::new(Vec::new()),
             climate_graphs: Arc::new(Vec::new()),
+            calendars: Arc::new(Vec::new()),
+            calendars_due: Arc::new(AtomicBool::new(false)),
             images: Arc::new(RwLock::new(HashMap::new())),
             last_image_fetch: Arc::new(std::sync::Mutex::new(None)),
             image_versions: Arc::new(std::sync::Mutex::new(HashMap::new())),
@@ -160,6 +174,7 @@ impl HaClient {
         let mut stats = Vec::new();
         let mut images = Vec::new();
         let mut climate = Vec::new();
+        let mut calendars: Vec<(String, u32)> = Vec::new();
         let mut all = Vec::new();
         for card in app.pages.iter().flat_map(|p| p.cards.iter()).map(|c| &c.kind) {
             match card {
@@ -175,6 +190,16 @@ impl HaClient {
                     graph_hours,
                     ..
                 } => climate.push((entity_id.clone(), graph_hours.unwrap_or(24).clamp(1, 24 * 14))),
+                CardConfig::Calendar { entities, days, .. } => {
+                    for item in entities.iter().filter(|i| !i.entity_id.is_empty()) {
+                        let days = (*days).clamp(1, crate::config::MAX_CALENDAR_DAYS);
+                        // The same calendar on two cards: fetched once, far enough for both
+                        match calendars.iter_mut().find(|c| c.0 == item.entity_id) {
+                            Some(c) => c.1 = c.1.max(days),
+                            None => calendars.push((item.entity_id.clone(), days)),
+                        }
+                    }
+                }
                 CardConfig::Statistics {
                     entity_id,
                     period,
@@ -208,7 +233,9 @@ impl HaClient {
                     all.extend(secondary_entity.clone());
                 }
                 CardConfig::SensorGrid { sensors, .. } => all.extend(sensors.iter().map(|s| s.entity_id.clone())),
-                CardConfig::Glance { entities, .. } | CardConfig::Breakdown { entities, .. } => all.extend(entities.iter().map(|s| s.entity_id.clone())),
+                CardConfig::Glance { entities, .. } | CardConfig::Breakdown { entities, .. } | CardConfig::Calendar { entities, .. } => {
+                    all.extend(entities.iter().map(|s| s.entity_id.clone()))
+                }
                 CardConfig::ScenesRow { scenes, .. } => all.extend(scenes.iter().map(|s| s.entity_id.clone())),
                 CardConfig::Heading { .. } => {}
             }
@@ -227,6 +254,7 @@ impl HaClient {
         climate.sort();
         climate.dedup();
         client.climate_graphs = Arc::new(climate);
+        client.calendars = Arc::new(calendars);
         client.entity_ids = Arc::new(all);
         client
     }
@@ -272,6 +300,9 @@ impl HaClient {
         }
         if let Some(h) = extras.history.get(&state.entity_id) {
             state.attributes.insert(HISTORY_ATTR.to_string(), serde_json::json!(h));
+        }
+        if let Some(events) = extras.calendars.get(&state.entity_id) {
+            state.attributes.insert(CALENDAR_ATTR.to_string(), events.clone());
         }
         if let Some(c) = extras.climate.get(&state.entity_id) {
             state
@@ -408,6 +439,31 @@ impl HaClient {
             )
         };
         let mut fetched = false;
+        let need_calendars = {
+            let last = self.extras.read().await.last_calendar_fetch;
+            self.calendars_due.swap(false, Ordering::Relaxed) || last.map(|t| t.elapsed() > CALENDAR_REFRESH).unwrap_or(true)
+        };
+        if need_calendars && !self.calendars.is_empty() {
+            fetched = true;
+            let mut found = HashMap::new();
+            let mut failed = false;
+            for (entity, days) in self.calendars.iter() {
+                match self.fetch_calendar(entity, *days).await {
+                    Ok(events) => {
+                        found.insert(entity.clone(), events);
+                    }
+                    Err(e) => {
+                        failed = true;
+                        tracing::warn!("Calendar fetch for {} failed: {}", entity, e);
+                    }
+                }
+            }
+            let mut ex = self.extras.write().await;
+            // A calendar that failed keeps the events it had
+            ex.calendars.extend(found);
+            // Tried again with the next refresh when something failed
+            ex.last_calendar_fetch = if failed { None } else { Some(Instant::now()) };
+        }
         if need_climate && !self.climate_graphs.is_empty() {
             fetched = true;
             match self.fetch_climate_history().await {
@@ -550,6 +606,8 @@ impl HaClient {
         if let Ok(mut t) = self.last_image_fetch.lock() {
             *t = None;
         }
+        // The refresh button: new appointments too
+        self.calendars_due.store(true, Ordering::Relaxed);
     }
 
     /// The pictures of the dashboard's `image` entities, fetched once in a
@@ -783,6 +841,27 @@ impl HaClient {
             }
         }
         Ok(out)
+    }
+
+    /// A calendar's events from now until `days` days ahead (one more, so the
+    /// last day is whole in any time zone), as `[{summary, start, end,
+    /// all_day}]` with `start`/`end` as Home Assistant sends them: an
+    /// RFC 3339 time, or a date for all-day events (the end date excluded).
+    async fn fetch_calendar(&self, entity_id: &str, days: u32) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+        let start = chrono::Utc::now();
+        let end = start + chrono::Duration::days(days as i64 + 1);
+        let fmt = "%Y-%m-%dT%H:%M:%SZ";
+        let resp = self
+            .client
+            .get(self.url(&format!("/api/calendars/{}", entity_id)))
+            .query(&[("start", start.format(fmt).to_string()), ("end", end.format(fmt).to_string())])
+            .send()
+            .await?;
+        if !resp.status().is_success() {
+            return Err(format!("HTTP {}", resp.status()).into());
+        }
+        let events: Vec<Value> = crate::ha::read_json(resp).await?;
+        Ok(Value::Array(events.iter().filter_map(simplify_event).collect()))
     }
 
     async fn fetch_forecast(&self, entity_id: &str) -> Result<Option<Value>, Box<dyn std::error::Error + Send + Sync>> {
@@ -1078,5 +1157,47 @@ mod bucket_tests {
             assert!(s <= t && t < n, "{kind}: {s} {t} {n}");
             assert_eq!(period_start(n, kind), n, "{kind}");
         }
+    }
+}
+
+/// One event of `/api/calendars/<id>` in the form the calendar card reads:
+/// `{"start": {"dateTime": ...} | {"date": ...}, "end": ..., "summary": ...}`
+/// becomes `{"summary", "start", "end", "all_day"}`.
+fn simplify_event(e: &Value) -> Option<Value> {
+    let when = |key: &str| -> Option<(String, bool)> {
+        let v = e.get(key)?;
+        if let Some(s) = v.as_str() {
+            // Older Home Assistant versions sent a plain string
+            return Some((s.to_string(), !s.contains('T')));
+        }
+        if let Some(t) = v.get("dateTime").and_then(Value::as_str) {
+            return Some((t.to_string(), false));
+        }
+        v.get("date").and_then(Value::as_str).map(|d| (d.to_string(), true))
+    };
+    let (start, all_day) = when("start")?;
+    let end = when("end").map(|e| e.0).unwrap_or_else(|| start.clone());
+    let summary = e.get("summary").and_then(Value::as_str).unwrap_or("").trim().to_string();
+    Some(serde_json::json!({ "summary": summary, "start": start, "end": end, "all_day": all_day }))
+}
+
+#[cfg(test)]
+mod calendar_tests {
+    use super::*;
+
+    #[test]
+    fn calendar_events_are_simplified() {
+        let timed = serde_json::json!({
+            "start": {"dateTime": "2026-11-23T09:30:00+01:00"},
+            "end": {"dateTime": "2026-11-23T10:00:00+01:00"},
+            "summary": " Dentist ", "description": null, "location": null
+        });
+        assert_eq!(
+            simplify_event(&timed).unwrap(),
+            serde_json::json!({"summary": "Dentist", "start": "2026-11-23T09:30:00+01:00", "end": "2026-11-23T10:00:00+01:00", "all_day": false})
+        );
+        let all_day = serde_json::json!({"start": {"date": "2026-11-24"}, "end": {"date": "2026-11-25"}, "summary": "Bins"});
+        assert_eq!(simplify_event(&all_day).unwrap()["all_day"], true);
+        assert!(simplify_event(&serde_json::json!({"summary": "no start"})).is_none());
     }
 }
