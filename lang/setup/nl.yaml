@@ -252,6 +252,8 @@ design:
   unit: "Eenheid"
   unit_optional: "Eenheid (optioneel)"
   forecast_days: "Verwachtingsdagen"
+  calendars: "Agenda's"
+  calendar_days: "Getoonde dagen"
   step: "Stap (°)"
   show_brightness: "Helderheidsbalk tonen"
   show_graph: "Grafiek van 24 uur tonen"
@@ -299,6 +301,7 @@ design:
   image_memory_hint: "Oudere Kobo's hebben maar 256–512 MB geheugen. Houd deze afbeelding klein, bijvoorbeeld 1920×1080 of kleiner; een grote camera-snapshot kan het geheugen van het dashboard opmaken. Afbeeldingen groter dan 4K worden niet getoond."
 
 card_types:
+  calendar: "Agenda"
   picture: "Afbeelding (bestand)"
   breakdown: "Verdeling (ring)"
   progress: "Voortgangsbalk"

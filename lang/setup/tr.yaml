@@ -252,6 +252,8 @@ design:
   unit: "Birim"
   unit_optional: "Birim (isteğe bağlı)"
   forecast_days: "Tahmin günü"
+  calendars: "Takvimler"
+  calendar_days: "Gösterilen gün"
   step: "Adım (°)"
   show_brightness: "Parlaklık çubuğunu göster"
   show_graph: "24 saatlik grafiği göster"
@@ -299,6 +301,7 @@ design:
   image_memory_hint: "Eski Kobo'ların yalnızca 256–512 MB belleği var. Bu resmi küçük tutun, örneğin 1920×1080 ya da daha küçük; büyük bir kamera görüntüsü panelin belleğini tüketebilir. 4K'dan büyük resimler gösterilmez."
 
 card_types:
+  calendar: "Takvim"
   picture: "Resim (dosya)"
   breakdown: "Dağılım (halka)"
   progress: "İlerleme çubuğu"

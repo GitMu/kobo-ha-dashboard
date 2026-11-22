@@ -256,6 +256,8 @@ design:
   unit: "Unit"
   unit_optional: "Unit (optional)"
   forecast_days: "Forecast days"
+  calendars: "Calendars"
+  calendar_days: "Days shown"
   step: "Step (°)"
   show_brightness: "Show brightness bar"
   show_graph: "Show 24-hour graph"
@@ -303,6 +305,7 @@ design:
   image_memory_hint: "Older Kobos have only 256–512 MB of memory. Keep this picture small, for example 1920×1080 or less; a large camera snapshot can make the dashboard run out of memory. Pictures larger than 4K are not shown."
 
 card_types:
+  calendar: "Calendar"
   picture: "Picture (file)"
   breakdown: "Breakdown (ring)"
   progress: "Progress bar"

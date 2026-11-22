@@ -1,4 +1,5 @@
 pub mod breakdown_card;
+pub mod calendar_card;
 pub mod climate_card;
 pub mod cover_card;
 pub mod glance_card;
@@ -15,6 +16,7 @@ pub mod switch_card;
 pub mod weather_card;
 
 pub use breakdown_card::render_breakdown_card;
+pub use calendar_card::render_calendar_card;
 pub use climate_card::render_climate_card;
 pub use cover_card::render_cover_card;
 pub use glance_card::render_glance_card;

@@ -252,6 +252,8 @@ design:
   unit: "Jednostka"
   unit_optional: "Jednostka (opcjonalnie)"
   forecast_days: "Dni prognozy"
+  calendars: "Kalendarze"
+  calendar_days: "Liczba dni"
   step: "Krok (°)"
   show_brightness: "Pokaż pasek jasności"
   show_graph: "Pokaż wykres z 24 godzin"
@@ -299,6 +301,7 @@ design:
   image_memory_hint: "Starsze Kobo mają tylko 256–512 MB pamięci. Używaj małego obrazu, na przykład 1920×1080 lub mniejszego; duży zrzut z kamery może wyczerpać pamięć panelu. Obrazy większe niż 4K nie są wyświetlane."
 
 card_types:
+  calendar: "Kalendarz"
   picture: "Obraz (plik)"
   breakdown: "Podział (pierścień)"
   progress: "Pasek postępu"

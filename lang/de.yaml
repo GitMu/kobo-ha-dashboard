@@ -115,3 +115,9 @@ update:
   how: "Zum Installieren den Kobo an einen Computer anschließen und das Einrichtungswerkzeug öffnen: Dort steht die neue Version und wo man sie herunterlädt."
   skip: "Diese Version überspringen"
   close: "Schließen"
+
+calendar:
+  tomorrow: "Morgen"
+  all_day: "Ganztägig"
+  nothing: "Nichts geplant"
+  more: "+{count} weitere"

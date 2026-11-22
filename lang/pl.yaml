@@ -115,3 +115,9 @@ update:
   how: "Aby ją zainstalować, podłącz Kobo do komputera i otwórz narzędzie konfiguracji: pokaże nową wersję i skąd ją pobrać."
   skip: "Pomiń tę wersję"
   close: "Zamknij"
+
+calendar:
+  tomorrow: "Jutro"
+  all_day: "Cały dzień"
+  nothing: "Nic zaplanowanego"
+  more: "+{count} więcej"

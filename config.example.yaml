@@ -118,6 +118,16 @@ pages:
         forecast_days: 5
 
       # Buttons that run scenes/scripts, press buttons or toggle anything else
+      # Upcoming events of several calendars in one list, grouped by day
+      - type: "calendar"
+        title: "Agenda"
+        # How many days are listed, today included (1 to 14)
+        days: 3
+        entities:
+          # The title is shown next to each event when there are several calendars
+          - { entity_id: "calendar.family", title: "Family" }
+          - { entity_id: "calendar.work", title: "Work" }
+
       - type: "scenes_row"
         title: "Scenes"
         scenes:

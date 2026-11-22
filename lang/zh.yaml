@@ -115,3 +115,9 @@ update:
   how: "要安装，请将 Kobo 连接到电脑并打开设置工具：其中会显示新版本及下载位置。"
   skip: "跳过此版本"
   close: "关闭"
+
+calendar:
+  tomorrow: "明天"
+  all_day: "全天"
+  nothing: "暂无安排"
+  more: "另有 {count} 项"
